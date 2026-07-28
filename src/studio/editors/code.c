@@ -382,7 +382,7 @@ static void drawCode(Code* code, bool withCursor)
         {
             x = xStart;
             y += STUDIO_TEXT_HEIGHT;
-            if (y >= TIC80_HEIGHT)
+            if (y >= rect.y + rect.h)
             {
                 // break early if we are below the visible screen viewport
                 break;
