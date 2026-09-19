@@ -1042,7 +1042,7 @@ static void drawSelectionVBank1(Map* map)
     }
 }
 
-static void drawGrid(Map* map)
+static void drawGridVBank1(Map* map)
 {
     tic_mem* tic = map->tic;
 
@@ -1051,25 +1051,14 @@ static void drawGrid(Map* map)
 
     for(s32 j = -scrollY; j <= TIC80_HEIGHT-scrollY; j += TIC_SPRITESIZE)
     {
-        if(j >= 0 && j < TIC80_HEIGHT)
-            for(s32 i = 0; i < TIC80_WIDTH; i++)
-            {
-                u8 color = tic_api_pix(tic, i, j, 0, true);
-                tic_api_pix(tic, i, j, (color+1)%TIC_PALETTE_SIZE, false);
-            }
+        if(j >= TOOLBAR_SIZE && j < TIC80_HEIGHT)
+            tic_api_line(tic, 0, j, TIC80_WIDTH, j, tic_color_dark_grey);
     }
 
-    for(s32 j = -scrollX; j <= TIC80_WIDTH-scrollX; j += TIC_SPRITESIZE)
+    for(s32 i = -scrollX; i <= TIC80_WIDTH-scrollX; i += TIC_SPRITESIZE)
     {
-        if(j >= 0 && j < TIC80_WIDTH)
-            for(s32 i = 0; i < TIC80_HEIGHT; i++)
-            {
-                if((i+scrollY) % TIC_SPRITESIZE)
-                {
-                    u8 color = tic_api_pix(tic, j, i, 0, true);
-                    tic_api_pix(tic, j, i, (color+1)%TIC_PALETTE_SIZE, false);
-                }
-            }
+        if(i >= 0 && i < TIC80_WIDTH)
+            tic_api_line(tic, i, TOOLBAR_SIZE, i, TIC80_HEIGHT, tic_color_dark_grey);
     }
 }
 
@@ -1096,9 +1085,6 @@ static void drawMapReg(Map* map)
         tic_api_map(tic, map->scroll.x / TIC_SPRITESIZE, map->scroll.y / TIC_SPRITESIZE,
             TIC_MAP_SCREEN_WIDTH + 1, TIC_MAP_SCREEN_HEIGHT + 1, -scrollX, -scrollY, 0, 0, 1, NULL, NULL);
         resetBlitMode(map->tic);
-
-        if (map->canvas.grid)
-            drawGrid(map);
     }
 
     if(handle && !space)
@@ -1290,6 +1276,8 @@ static void tick(Map* map)
     tic_mem* tic = map->tic;
     map->tickCounter++;
 
+    memcpy(&tic->ram->vram.palette, getBankPalette(map->studio, false), sizeof(tic_palette));
+
     processAnim(map->anim.movie, map);
 
     // process scroll
@@ -1312,6 +1300,9 @@ static void tick(Map* map)
 
         tic_api_clip(tic, 0, TOOLBAR_SIZE, TIC80_WIDTH - (sheetVisible(map) ? TIC_SPRITESHEET_SIZE+2 : 0), TIC80_HEIGHT - TOOLBAR_SIZE);
         {
+            if(map->canvas.grid)
+                drawGridVBank1(map);
+
             s32 screenScrollX = map->scroll.x % TIC80_WIDTH;
             s32 screenScrollY = map->scroll.y % TIC80_HEIGHT;
 
@@ -1361,13 +1352,6 @@ static void onStudioEvent(Map* map, StudioEvent event)
     case TIC_TOOLBAR_REDO:  redo(map); break;
     default: break;
     }
-}
-
-static void scanline(tic_mem* tic, s32 row, void* data)
-{
-    Map* map = data;
-    if(row == 0)
-        memcpy(&tic->ram->vram.palette, getBankPalette(map->studio, false), sizeof(tic_palette));
 }
 
 static void emptyDone(void* data) {}
@@ -1457,7 +1441,6 @@ void initMap(Map* map, Studio* studio, tic_map* src)
             }),
         },
         .event = onStudioEvent,
-        .scanline = scanline,
     };
 
     map->anim.movie = resetMovie(&map->anim.idle);

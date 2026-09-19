@@ -91,6 +91,7 @@ static void tick(World* world)
     if(keyWasPressed(world->studio, tic_key_tab)) setStudioMode(world->studio, TIC_MAP_MODE);
 
     memcpy(&tic->ram->vram, world->preview, PREVIEW_SIZE);
+    memcpy(&tic->ram->vram.palette, getBankPalette(world->studio, false), sizeof(tic_palette));
 
     VBANK(tic, 1)
     {
@@ -98,13 +99,6 @@ static void tick(World* world)
         memcpy(tic->ram->vram.palette.data, getConfig(world->studio)->cart->bank0.palette.vbank0.data, sizeof(tic_palette));
         drawGrid(world);
     }
-}
-
-static void scanline(tic_mem* tic, s32 row, void* data)
-{
-    World* world = data;
-    if(row == 0)
-        memcpy(&tic->ram->vram.palette, getBankPalette(world->studio, false), sizeof(tic_palette));
 }
 
 void initWorld(World* world, Studio* studio, Map* map)
@@ -119,7 +113,6 @@ void initWorld(World* world, Studio* studio, Map* map)
         .map = map,
         .tick = tick,
         .preview = world->preview,
-        .scanline = scanline,
     };
 
     memset(world->preview, 0, PREVIEW_SIZE);

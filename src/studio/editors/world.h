@@ -36,7 +36,6 @@ struct World
     void* preview;
 
     void (*tick)(World* world);
-    void (*scanline)(tic_mem* tic, s32 row, void* data);
 };
 
 void initWorld(World* world, Studio* studio, Map* map);

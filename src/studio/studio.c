@@ -2257,6 +2257,19 @@ static void renderStudio(Studio* studio)
         // restore mapping
         studio->tic->ram->mapping = getConfig(studio)->options.mapping;
 
+        if(studio->mode != TIC_RUN_MODE &&
+           studio->mode != TIC_SPRITE_MODE &&
+           studio->mode != TIC_MAP_MODE &&
+           studio->mode != TIC_WORLD_MODE)
+        {
+            memcpy(tic->ram->vram.palette.data, getConfig(studio)->cart->bank0.palette.vbank0.data, sizeof(tic_palette));
+        }
+
+        if(studio->mode != TIC_RUN_MODE)
+        {
+            tic->ram->font = studio->systemFont;
+        }
+
         tic_core_tick_start(tic);
     }
 
@@ -2592,30 +2605,14 @@ void studio_tick(Studio* studio, tic80_input input)
     renderStudio(studio);
 
     {
-#if defined(BUILD_EDITORS)
-        Sprite* sprite = studio->banks.sprite[studio->bank.index.sprites];
-        Map* map = studio->banks.map[studio->bank.index.map];
-#endif
-
         tic_blit_callback callback[TIC_MODES_COUNT] =
         {
             [TIC_MENU_MODE]     = {studio_menu_anim_scanline, NULL, NULL, studio->menu},
 
-#if defined(BUILD_EDITORS)
-            [TIC_SPRITE_MODE]   = {sprite->scanline,        NULL, NULL, sprite},
-            [TIC_MAP_MODE]      = {map->scanline,           NULL, NULL, map},
-            [TIC_WORLD_MODE]    = {studio->world->scanline,    NULL, NULL, studio->world},
-#endif
 #if defined(BUILD_SURF)
             [TIC_SURF_MODE]     = {studio->surf->scanline,     NULL, NULL, studio->surf},
 #endif
         };
-
-        if(studio->mode != TIC_RUN_MODE)
-        {
-            memcpy(tic->ram->vram.palette.data, getConfig(studio)->cart->bank0.palette.vbank0.data, sizeof(tic_palette));
-            tic->ram->font = studio->systemFont;
-        }
 
 #if defined(BUILD_RENDER_CACHE)
         tic80_mouse* m = &tic->ram->input.mouse;

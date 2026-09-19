@@ -2051,14 +2051,6 @@ static void drawSpriteToolbar(Sprite* sprite)
     }
 }
 
-static void scanline(tic_mem* tic, s32 row, void* data)
-{
-    Sprite* sprite = (Sprite*)data;
-
-    if(row == 0)
-        memcpy(&tic->ram->vram.palette, getBankPalette(sprite->studio, sprite->palette.vbank1), sizeof(tic_palette));
-}
-
 static void drawAdvancedButton(Sprite* sprite, s32 x, s32 y)
 {
     tic_mem* tic = sprite->tic;
@@ -2091,6 +2083,8 @@ static void drawAdvancedButton(Sprite* sprite, s32 x, s32 y)
 static void tick(Sprite* sprite)
 {
     tic_mem* tic = sprite->tic;
+
+    memcpy(&tic->ram->vram.palette, getBankPalette(sprite->studio, sprite->palette.vbank1), sizeof(tic_palette));
 
     processAnim(sprite->anim.movie, sprite);
 
@@ -2248,7 +2242,6 @@ void initSprite(Sprite* sprite, Studio* studio, tic_tiles* src)
             }),
         },
         .event = onStudioEvent,
-        .scanline = scanline,
     };
 
     sprite->anim.movie = resetMovie(&sprite->anim.idle);
